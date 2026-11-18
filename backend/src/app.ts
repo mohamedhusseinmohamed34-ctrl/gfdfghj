@@ -4,6 +4,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/auth.routes";
 import serviceRoutes from "./routes/services.routes";
+import categoryRoutes from "./routes/categories.routes";
 import bookingRoutes from "./routes/bookings.routes";
 import providerRoutes from "./routes/provider.routes";
 import adminRoutes from "./routes/admin.routes";
@@ -25,7 +26,6 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: "Too many authentication attempts. Try again later." }
 });
-
 const contactLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 5,
@@ -34,8 +34,9 @@ const contactLimiter = rateLimit({
   message: { message: "Too many messages. Please try again later." }
 });
 
-app.get("/api/health", (_req, res) => res.json({ message: "Khidma API is running" }));
+app.get("/api/health", (_req,res) => res.json({ message: "Khidma API is running" }));
 app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/categories", categoryRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/provider", providerRoutes);
