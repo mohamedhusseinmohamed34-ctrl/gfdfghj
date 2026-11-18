@@ -183,8 +183,8 @@ router.put("/services/:id", async (req: AuthRequest, res: Response) => {
 
 const availabilitySchema = z.object({
   day_of_week: z.number().int().min(0).max(6),
-  start_time: z.string().regex(/^([01]\\d|2[0-3]):[0-5]\\d$/),
-  end_time: z.string().regex(/^([01]\\d|2[0-3]):[0-5]\\d$/)
+  start_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+  end_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/)
 }).refine(d => d.end_time > d.start_time, {
   message: "End time must be later than start time",
   path: ["end_time"]
