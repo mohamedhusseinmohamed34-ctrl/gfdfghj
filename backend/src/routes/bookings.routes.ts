@@ -34,7 +34,7 @@ router.post("/", authenticate, authorize("customer"), async (req: AuthRequest, r
        FROM public.services s
        JOIN public.providers p ON p.id = s.provider_id
        WHERE s.id = $1 AND s.is_active = TRUE AND p.is_active = TRUE
-       FOR UPDATE OF s`,
+       FOR UPDATE OF p`,
       [d.service_id]
     );
     if (!serviceResult.rows.length) {
@@ -65,13 +65,15 @@ router.post("/", authenticate, authorize("customer"), async (req: AuthRequest, r
 
     const overlap = await client.query(
       `SELECT EXISTS (
-         SELECT 1 FROM public.bookings
-         WHERE service_id = $1
-           AND status IN ('pending','approved')
-           AND booking_start < $3::timestamptz
-           AND booking_end > $2::timestamptz
+         SELECT 1
+         FROM public.bookings b
+         JOIN public.services s ON s.id = b.service_id
+         WHERE s.provider_id = $1
+           AND b.status IN ('pending','approved')
+           AND b.booking_start < $3::timestamptz
+           AND b.booking_end > $2::timestamptz
        ) AS busy`,
-      [d.service_id, d.booking_start, d.booking_end]
+      [service.provider_id, d.booking_start, d.booking_end]
     );
     if (overlap.rows[0].busy) {
       await client.query("ROLLBACK");
