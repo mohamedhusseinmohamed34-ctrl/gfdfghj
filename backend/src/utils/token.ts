@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import jwt, { SignOptions } from "jsonwebtoken";
 
 const secret = process.env.JWT_SECRET;
