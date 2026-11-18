@@ -58,7 +58,7 @@ router.post("/", authenticate, authorize("customer"), async (req: AuthRequest, r
        ) AS has_schedule`,
       [service.provider_id, d.booking_start, d.booking_end]
     );
-    if (availability.rows[0].has_schedule && !availability.rows[0].available) {
+    if (!availability.rows[0].has_schedule || !availability.rows[0].available) {
       await client.query("ROLLBACK");
       return res.status(409).json({ message: "The provider is not available at this time" });
     }
