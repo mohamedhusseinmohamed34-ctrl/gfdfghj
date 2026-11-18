@@ -23,6 +23,8 @@ A booking application for a service hub in Cairo. Customers discover services an
 2. Copy `backend/.env.example` to `backend/.env`.
 3. Add your Supabase PostgreSQL connection string and a random JWT secret (at least 64 characters) to `backend/.env`.
 4. From the root run `npm install`, then `npm run dev`.
+
+To provision the first admin, set `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` temporarily in `backend/.env` (use a unique password of at least 14 characters), then run `npm run create-admin --workspace backend`. Remove `ADMIN_PASSWORD` from the local environment file after the account is created. Existing accounts are never promoted by this script.
 5. Frontend: http://localhost:5173 — API: http://localhost:5000/api/health
 
 ## Implemented pages
