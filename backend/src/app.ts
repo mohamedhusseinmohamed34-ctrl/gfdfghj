@@ -35,7 +35,9 @@ const contactLimiter = rateLimit({
 });
 
 app.get("/api/health", (_req,res) => res.json({ message: "Khidma API is running" }));
-app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
+app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/bookings", bookingRoutes);
