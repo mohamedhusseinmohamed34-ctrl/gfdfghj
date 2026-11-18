@@ -7,7 +7,10 @@ export function originGuard(req: Request, res: Response, next: NextFunction) {
   if (!mutating) return next();
 
   const origin = req.get("origin");
-  if (origin && allowedOrigin && origin !== allowedOrigin) {
+  if (!allowedOrigin) {
+    return res.status(500).json({ message: "Server origin configuration is missing" });
+  }
+  if (origin && origin !== allowedOrigin) {
     return res.status(403).json({ message: "Request origin is not allowed" });
   }
   return next();
