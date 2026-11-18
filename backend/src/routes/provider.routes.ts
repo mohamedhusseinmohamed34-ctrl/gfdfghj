@@ -180,4 +180,101 @@ router.put("/services/:id", async (req: AuthRequest, res: Response) => {
   }
 });
 
+
+const availabilitySchema = z.object({
+  day_of_week: z.number().int().min(0).max(6),
+  start_time: z.string().regex(/^([01]\\d|2[0-3]):[0-5]\\d$/),
+  end_time: z.string().regex(/^([01]\\d|2[0-3]):[0-5]\\d$/)
+}).refine(d => d.end_time > d.start_time, {
+  message: "End time must be later than start time",
+  path: ["end_time"]
+});
+
+router.get("/availability", async (req: AuthRequest, res: Response) => {
+  try {
+    const providerId = await getProviderId(req.user!.id);
+    if (!providerId) return res.status(404).json({ message: "Provider profile not found" });
+    const result = await pool.query(
+      `SELECT id, day_of_week, start_time, end_time, is_available
+       FROM public.provider_availability
+       WHERE provider_id=$1
+       ORDER BY day_of_week, start_time`,
+      [providerId]
+    );
+    return res.json({ availability: result.rows });
+  } catch (error) {
+    console.error("Provider availability error:", error);
+    return res.status(500).json({ message: "Unable to load availability" });
+  }
+});
+
+router.post("/availability", async (req: AuthRequest, res: Response) => {
+  const parsed = availabilitySchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      message: "Invalid availability hours",
+      errors: parsed.error.flatten().fieldErrors
+    });
+  }
+  try {
+    const providerId = await getProviderId(req.user!.id);
+    if (!providerId) return res.status(404).json({ message: "Provider profile not found" });
+    const d = parsed.data;
+    const result = await pool.query(
+      `INSERT INTO public.provider_availability
+       (provider_id, day_of_week, start_time, end_time)
+       VALUES ($1,$2,$3,$4)
+       RETURNING id, day_of_week, start_time, end_time, is_available`,
+      [providerId, d.day_of_week, d.start_time, d.end_time]
+    );
+    return res.status(201).json({ message: "Availability added", slot: result.rows[0] });
+  } catch (error: any) {
+    if (error?.code === "23505") {
+      return res.status(409).json({ message: "This availability time already exists" });
+    }
+    console.error("Add availability error:", error);
+    return res.status(500).json({ message: "Unable to add availability" });
+  }
+});
+
+router.patch("/availability/:id", async (req: AuthRequest, res: Response) => {
+  const id = z.string().uuid().safeParse(req.params.id);
+  const body = z.object({ is_available: z.boolean() }).safeParse(req.body);
+  if (!id.success || !body.success) {
+    return res.status(400).json({ message: "Invalid availability update" });
+  }
+  try {
+    const providerId = await getProviderId(req.user!.id);
+    const result = await pool.query(
+      `UPDATE public.provider_availability
+       SET is_available=$1
+       WHERE id=$2 AND provider_id=$3
+       RETURNING id, day_of_week, start_time, end_time, is_available`,
+      [body.data.is_available, id.data, providerId]
+    );
+    if (!result.rows.length) return res.status(404).json({ message: "Availability slot not found" });
+    return res.json({ message: "Availability updated", slot: result.rows[0] });
+  } catch (error) {
+    console.error("Update availability error:", error);
+    return res.status(500).json({ message: "Unable to update availability" });
+  }
+});
+
+router.delete("/availability/:id", async (req: AuthRequest, res: Response) => {
+  const id = z.string().uuid().safeParse(req.params.id);
+  if (!id.success) return res.status(400).json({ message: "Invalid availability ID" });
+  try {
+    const providerId = await getProviderId(req.user!.id);
+    const result = await pool.query(
+      "DELETE FROM public.provider_availability WHERE id=$1 AND provider_id=$2 RETURNING id",
+      [id.data, providerId]
+    );
+    if (!result.rows.length) return res.status(404).json({ message: "Availability slot not found" });
+    return res.json({ message: "Availability removed" });
+  } catch (error) {
+    console.error("Delete availability error:", error);
+    return res.status(500).json({ message: "Unable to remove availability" });
+  }
+});
+
 export default router;
