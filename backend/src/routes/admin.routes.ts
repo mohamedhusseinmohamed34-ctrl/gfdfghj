@@ -72,4 +72,49 @@ router.patch("/bookings/:id/status", async (req, res) => {
   }
 });
 
+
+
+// Category management is restricted to administrators.
+router.get("/categories", async (_req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, name, description, created_at FROM public.categories ORDER BY name"
+    );
+    return res.json({ categories: result.rows });
+  } catch (error) {
+    console.error("Admin categories error:", error);
+    return res.status(500).json({ message: "Unable to load categories" });
+  }
+});
+
+router.post("/categories", async (req, res) => {
+  const parsed = z.object({
+    name: z.string().trim().min(2).max(100),
+    description: z.string().trim().max(2000).optional()
+  }).safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      message: "Invalid category details",
+      errors: parsed.error.flatten().fieldErrors
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO public.categories (name, description)
+       VALUES ($1, $2)
+       RETURNING id, name, description, created_at`,
+      [parsed.data.name, parsed.data.description ?? null]
+    );
+    return res.status(201).json({ message: "Category created", category: result.rows[0] });
+  } catch (error: any) {
+    if (error?.code === "23505") {
+      return res.status(409).json({ message: "A category with this name already exists" });
+    }
+    console.error("Create category error:", error);
+    return res.status(500).json({ message: "Unable to create category" });
+  }
+});
+
 export default router;
