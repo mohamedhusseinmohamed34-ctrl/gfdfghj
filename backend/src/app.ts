@@ -41,7 +41,7 @@ app.use("/api/services", serviceRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/provider", providerRoutes);
 app.use("/api/admin", adminRoutes);
-app.post("/api/contact", contactLimiter);
+app.use("/api/contact", contactLimiter);
 app.use("/api", generalRoutes);
 app.use(errorHandler);
 
