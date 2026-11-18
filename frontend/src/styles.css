@@ -217,3 +217,8 @@ tr:last-child td{border:0}
  .role-selector{grid-template-columns:1fr 1fr}
  .about-hero{padding:25px}
 }
+
+.row-actions{display:flex;align-items:center;gap:12px;white-space:nowrap}
+.danger-text{color:var(--red)}
+.availability-manager .empty-inline{padding:24px;color:var(--muted);font-size:13px}
+@media(max-width:600px){.row-actions{gap:8px}.simple-list-row{align-items:flex-start}}
