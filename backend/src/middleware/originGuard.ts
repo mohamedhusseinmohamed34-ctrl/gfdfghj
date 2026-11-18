@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { Request, Response, NextFunction } from "express";
 
 const allowedOrigin = process.env.FRONTEND_ORIGIN;
