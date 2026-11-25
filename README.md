@@ -15,7 +15,7 @@ A booking application for a service hub in Cairo. Customers discover services an
 ## Structure
 - `frontend/` React application
 - `backend/` Express API and database code
-- `api/index.ts` Vercel serverless entry point
+- `vercel.json` Vercel Services routing configuration
 - `backend/sql/` custom-login migration
 
 ## Setup
@@ -26,6 +26,24 @@ A booking application for a service hub in Cairo. Customers discover services an
 
 To provision the first admin, set `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` temporarily in `backend/.env` (use a unique password of at least 14 characters), then run `npm run create-admin --workspace backend`. Remove `ADMIN_PASSWORD` from the local environment file after the account is created. Existing accounts are never promoted by this script.
 5. Frontend: http://localhost:5173 — API: http://localhost:5000/api/health
+
+
+## Deploy both apps together on Vercel
+
+This repository uses Vercel Services to build two apps separately and serve them through one deployment:
+- `frontend/` is the Vite website.
+- `backend/` is the Express API.
+
+In Vercel, import this repository and configure the project:
+1. Set **Root Directory** to the repository root (`.`), not `frontend` or `backend`.
+2. Set **Framework Preset** to **Services** (not Vite or Express).
+3. Keep the committed root `vercel.json`. It routes `/api/*` to the backend and all other paths to the frontend.
+4. Add these Environment Variables for the required environments: `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `NODE_ENV=production`, and `FRONTEND_ORIGIN` set to the exact deployed origin (for example, `https://your-project.vercel.app`). Never prefix backend secrets with `VITE_`.
+5. Redeploy.
+
+The backend exports its Express app from `backend/src/app.ts`, an entry file recognized by Vercel's Express framework. The frontend has its own Vite project configuration under `frontend/`.
+
+**Important:** Vercel Services is currently a beta deployment mode. If the **Services** Framework Preset is not available in your Vercel project, this two-service single-project configuration is not enabled for your account. In that case, deploy `frontend/` and `backend/` as separate Vercel projects instead.
 
 ## Implemented pages
 Welcome/login/register, home/service discovery, service details, book appointment, booking confirmation, my appointments, provider bookings, provider profile, admin dashboard, receptionist dashboard, About/contact.
